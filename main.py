@@ -5,7 +5,7 @@ from math import atan,pi
 import utility
 import random
 import numpy as np
-
+#vaggo gamiesai
 np.seterr('raise')
 noofagents=70
 fps=30
