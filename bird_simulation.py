@@ -7,18 +7,11 @@ import random
 import numpy as np
 from agent import Bird
 from grid_data_structure import Grid
-
-imgs_folder="\\imgs\\"
-WIDTH=1200
-HEIGHT=1000
-noofagents=200
-fps=30
-cell_size=40
-
+from global_variables import *
 
 class Simulation:
 	def __init__(self):
-		np.seterr('raise')
+		np.seterr('ignore')
 		pygame.init()
 		self.window = pygame.display.set_mode((WIDTH, HEIGHT))
 		pygame.display.set_caption('Flock O\' Birds!')
@@ -34,7 +27,7 @@ class Simulation:
 					sys.exit()
 					
 			self.update()
-			self.del_and_spawn()
+			#self.del_and_spawn()
 			self.draw_window(self.window)
 			pygame.display.update()	
 
@@ -79,6 +72,4 @@ class Simulation:
 
 if (__name__=="__main__"):
 	s=Simulation()
-	grid=Grid(s.agents,cell_size,WIDTH,HEIGHT)
-	print(grid.getNeighbours(s.agents[0]))
 	s.start()

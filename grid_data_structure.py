@@ -26,9 +26,7 @@ class Grid:
         agent_i=int(x//self.cell_size)
         agent_j=int(y//self.cell_size)
         for i in range(agent_i-1,agent_i+2):
-            if 0<=i<self.hsize:
                 for j in range(agent_j-1,agent_j+2):
-                    if 0<=j<self.vsize:
-                        for agent in self.grid[i][j]:
+                        for agent in self.grid[i%self.hsize][j%self.vsize]:
                             neighbours.append(agent)
         return neighbours

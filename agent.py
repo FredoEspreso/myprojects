@@ -2,6 +2,7 @@ from utility import *
 import os
 import numpy as np
 from grid_data_structure import Grid
+from global_variables import *
 
 class Agent:
     #constructor
@@ -39,7 +40,7 @@ class Bird(Agent):
         #add acceleration component
         self.accel+= 10*self.alignment(neighbours)
         self.accel+= self.cohesion(neighbours)
-        self.accel+= 60*self.separation(neighbours)
+        self.accel+= 10*self.separation(neighbours)
 
         self.accel=constrain_to_radius(self.accel,self.max_accel)
         self.accel=0.8*self.accel+0.2*prev_accel
@@ -53,6 +54,8 @@ class Bird(Agent):
 
         #update position
         self.pos=self.pos*(1.0)+self.velocity
+        self.pos[0]=self.pos[0]%WIDTH
+        self.pos[1]=self.pos[1]%HEIGHT
 
     
     #returns the acceleration to seek target
@@ -75,9 +78,20 @@ class Bird(Agent):
 
     def cohesion(self,neighbourhood):
         if (neighbourhood):
-            positions=list(map(lambda agent: agent.pos,neighbourhood))
-            average_position= np.average(positions,0)
-            desired_velocity= normalize(average_position-self.pos)*self.max_velocity
+            #get a list of neighbour positions
+            offset_to_neighbours=list(map(lambda agent: agent.pos-self.pos,neighbourhood))
+            offset_to_neighbours=[]
+            for agent in neighbourhood:
+                (dx,dy)=agent.pos-self.pos
+                for (dx,dy) in offset_to_neighbours:
+                    #ledonut topology
+                    if abs(dx) > WIDTH-abs(dx) :
+                        dx=dx-WIDTH
+                    if abs(dy) > HEIGHT-abs(dy) :
+                        dy=dy-HEIGHT
+            offset_to_neighbours.append((dx,dy))
+            average_offset= np.average(offset_to_neighbours,0)
+            desired_velocity= normalize(average_offset)*self.max_velocity
             return self.max_accel*normalize(1.0*desired_velocity-self.velocity)
         else:
             return np.array([0,0])
@@ -92,25 +106,39 @@ class Bird(Agent):
             return np.array([0,0])
     def separation(self,neighbourhood):
         if (neighbourhood):
-            positions=list(map(lambda agent: agent.pos,neighbourhood))
+            offset_to_neighbours=list(map(lambda agent: agent.pos-self.pos,neighbourhood))
+            offset_to_neighbours=[]
+            for agent in neighbourhood:
+                (dx,dy)=agent.pos-self.pos
+                #ledonut topology
+                if abs(dx) > WIDTH-abs(dx) :
+                    dx=dx-WIDTH
+                if abs(dy) > HEIGHT-abs(dy) :
+                    dy=dy-HEIGHT
+                offset_to_neighbours.append((dx,dy))
+
             desired_velocity=np.array([0.0,0.0])
-            closest=(0,0)
-            closest_dist=1000000000
-            for position in positions:
-                desired_velocity += -position+self.pos
-                
-            #     if(2<np.linalg.norm(-position+self.pos)<closest_dist) :
-            #         closest=position
-            #         closest_dist=np.linalg.norm(-position+self.pos)
-            # desired_velocity = normalize(-position+self.pos)#
+            steer=np.array([0.0,0.0])
+            for offset in offset_to_neighbours:
+                desired_velocity -= np.array(offset)*self.max_velocity
+                steer+=(1.0*desired_velocity-self.velocity)/(np.sqrt(np.linalg.norm(offset)))
             
-            return self.max_accel*normalize(1.0*desired_velocity-self.velocity)/ (np.sqrt(np.linalg.norm(-position+self.pos)))
+            return constrain_to_radius(steer,self.max_accel)
         else:
             return np.array([0,0])
 
     def get_neighbours(self,grid,r):
         neighbours=[]
         for agent in grid.getNeighbours(self):
-            if( 0<np.linalg.norm(self.pos-agent.pos)<r ):
+            (ax,ay)=self.pos
+            (bx,by)=agent.pos
+            (dx,dy)=(bx-ax,by-ay)
+            #ledonut topology
+            if abs(dx) > WIDTH-abs(dx) :
+                dx=dx-WIDTH
+            if abs(dy) > HEIGHT-abs(dy) :
+                dy=dy-HEIGHT
+
+            if( 0<np.linalg.norm((dx,dy))<r ):
                 neighbours.append(agent)
         return neighbours
