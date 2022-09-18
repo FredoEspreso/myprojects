@@ -1,6 +1,7 @@
 from utility import *
 import os
 import numpy as np
+from grid_data_structure import Grid
 
 class Agent:
     #constructor
@@ -9,7 +10,6 @@ class Agent:
         self.max_accel=0.4
         self.pos = np.array(init_pos)
         self.velocity=np.random.rand(2)*self.max_velocity*np.random.uniform(-1,1)
-        # self.velocity=np.random.rand(2)*self.max_velocity*np.random.choice([-1,1]) #*np.random.uniform(-1,1)
         self.angle = init_angle
         self.accel = np.array([0.0,0.0])
 
@@ -21,19 +21,27 @@ class Agent:
 
     #use this function to update the agent in every frame
     def update(self,agents_list):
+        pass
+
+class Bird(Agent):
+    #constructor
+    def __init__(self, range, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.range=range
+
+    #use this function to update the agent in every frame
+    def update(self,grid):
         prev_accel=self.accel
         #initialize acceleration to zero
         self.accel=np.array([0.0,0.0])
-        neighbours=self.get_neighbours(agents_list,120)
+        neighbours=self.get_neighbours(grid,self.range)
+        
         #add acceleration component
-        #self.accel+= self.seek((300,300))
-        #self.accel+= self.seek_arrive((300,300),50)
         self.accel+= 10*self.alignment(neighbours)
         self.accel+= self.cohesion(neighbours)
         self.accel+= 60*self.separation(neighbours)
 
         self.accel=constrain_to_radius(self.accel,self.max_accel)
-        #print(prev_accel-self.accel)
         self.accel=0.8*self.accel+0.2*prev_accel
         #update velocity
         self.velocity+=self.accel
@@ -100,14 +108,9 @@ class Agent:
         else:
             return np.array([0,0])
 
-    def get_neighbours(self,agents_list,r):
+    def get_neighbours(self,grid,r):
         neighbours=[]
-        for agent in agents_list:
+        for agent in grid.getNeighbours(self):
             if( 0<np.linalg.norm(self.pos-agent.pos)<r ):
                 neighbours.append(agent)
         return neighbours
-            
-            
-
-
-    
